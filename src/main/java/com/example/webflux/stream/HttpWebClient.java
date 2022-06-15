@@ -27,10 +27,10 @@ public class HttpWebClient
         headers.put("ua", "ua");
         data.setHeaders(headers);
         data.setHttpMethod("GET");
-        Map<String, String> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         map.put("createBy", "aa");
         data.setBodyMap(map);
-        MultiValueMap  map2 = new LinkedMultiValueMap<>();
+        MultiValueMap<String, String>  map2 = new LinkedMultiValueMap<>();
         map2.add("aa", "AA");
         map2.add("pageNum", "AA");
         map2.add("pageSize", "AA");
@@ -40,9 +40,6 @@ public class HttpWebClient
     }
 
     static WebClient client = WebClient.create();
-
-    //static JSONObject json = new JSONObject();
-
     public static Mono<Map> performed(Data data) {
         UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(data.getUrlPath()).queryParams(data.getQueryParam()).build();
         WebClient.RequestBodySpec spec = client
@@ -50,7 +47,6 @@ public class HttpWebClient
                 .uri(uriComponents.toUriString())
                 .headers(c -> setHeaders(data, c))
                 .contentType(data.getContentType());
-
         if (data.getBodyMap() != null) {
             return spec.bodyValue(data.getBodyMap()).retrieve().bodyToMono(Map.class);
         }
@@ -86,7 +82,7 @@ public class HttpWebClient
         /**
          * body 传递的参数
          */
-        Map<String, String> bodyMap;
+        Map<String, Object> bodyMap;
 
         /**
          * 请求头
@@ -165,11 +161,11 @@ public class HttpWebClient
             return this;
         }
 
-        public Map<String, String> getBodyMap() {
+        public Map<String, Object> getBodyMap() {
             return bodyMap;
         }
 
-        public Data setBodyMap(Map<String, String> map) {
+        public Data setBodyMap(Map<String, Object> map) {
             this.bodyMap = map;
             return this;
         }
