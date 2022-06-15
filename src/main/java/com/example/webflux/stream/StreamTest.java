@@ -1,7 +1,9 @@
 package com.example.webflux.stream;
 
 import com.example.webflux.User;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
@@ -17,10 +19,33 @@ import java.util.stream.Stream;
 public class StreamTest
 {
 
+
+    public static void main(String[] args) {
+
+        Mono<String> mono = WebClient
+                //创建WenClient实例
+                .create()
+                //方法调用，WebClient中提供了多种方法
+                .method(HttpMethod.GET)
+                //请求url
+                .uri("https://www.jianshu112.com/p/cc3a99614476")
+                //获取响应结果
+                .retrieve()
+                //将结果转换为指定类型
+                .bodyToMono(String.class)
+                .onErrorResume(c->{
+                    System.out.println(c);
+                    return  Mono.just("aa");
+                });
+        //block方法返回最终调用结果，block方法是阻塞的
+        System.out.println("响应结果：" + mono.block());
+    }
+
     // K url V  mono
     public Map<String, Mono<Object>> monoMap = new HashMap<>();
 
-    public static void main(String[] args) {
+
+    public static void main1(String[] args) {
         //flatMap  转为一
         Mono.just(new User("aa")).flatMap(c->  Mono.just("aa"))
                 .subscribe();
