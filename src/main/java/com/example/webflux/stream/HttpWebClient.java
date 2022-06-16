@@ -5,6 +5,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -20,51 +21,70 @@ import java.util.Map;
 public class HttpWebClient
 {
     public static void main(String[] args) {
+
+    }
+
+
+    static Data getData() {
         Data data = new Data();
         data.setUrlPath("http://10.10.12.114:8099/test3/tt");
+
         data.setContentType("application/json");
+
+        // 设置 Headers
         Map<String, String> headers = new HashMap<>();
         headers.put("ua", "ua");
         data.setHeaders(headers);
+
         data.setHttpMethod("GET");
-        Map<String, Object> map = new HashMap<>();
+
+        // 设置 Body
+        Map<String, String> map = new HashMap<>();
         map.put("createBy", "aa");
         data.setBodyMap(map);
-        MultiValueMap<String, String>  map2 = new LinkedMultiValueMap<>();
-        map2.add("aa", "AA");
-        map2.add("pageNum", "AA");
-        map2.add("pageSize", "AA");
-        data.setQueryParam(map2);
 
-        System.out.println("输出数据：   " + performed(data).block());
+        // 设置 QueryParam
+        Map<String, String> map2 = new HashMap<>();
+        map2.put("aa", "AA");
+        map2.put("pageNum", "${user}");
+        map2.put("pageSize", "AA");
+        data.setQueryParam(map2);
+        return data;
+    }
+
+    private static void test1() {
+        System.out.println("输出数据：   " + performed(getData(), null).block());
     }
 
     static WebClient client = WebClient.create();
-    public static Mono<Map> performed(Data data) {
-        UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(data.getUrlPath()).queryParams(data.getQueryParam()).build();
+
+    /**
+     * 具体执行方法
+     *
+     * @param data    配置数据
+     * @param dataMap 上个方法执行结果
+     * @return 相应的数据
+     */
+    public static Mono<HashMap> performed(Object data, Map<String, Object> dataMap) {
+        Mono<HashMap> output;
+        Data newData= (Data) data;
+        UriComponents uriComponents = UriComponentsBuilder
+                .fromHttpUrl(newData.getUrlPath()).queryParams(newData.getQueryParam(dataMap)).build();
         WebClient.RequestBodySpec spec = client
-                .method(data.getHttpMethod())
+                .method(newData.getHttpMethod())
                 .uri(uriComponents.toUriString())
-                .headers(c -> setHeaders(data, c))
-                .contentType(data.getContentType());
-        if (data.getBodyMap() != null) {
-            return spec.bodyValue(data.getBodyMap()).retrieve().bodyToMono(Map.class);
+                .headers(c -> newData.getHeaders(dataMap, c))
+                .contentType(newData.getContentType());
+        if (newData.getBodyMap() != null) {
+            output = spec.bodyValue(Data.getMapValueObject(newData.getBodyMap(), dataMap)).retrieve().bodyToMono(HashMap.class);
+        }else {
+            output = spec.retrieve().bodyToMono(HashMap.class);
         }
-        return spec.retrieve().bodyToMono(Map.class);
+        return output;
     }
-
-    private static void setHeaders(Data data, HttpHeaders c) {
-        if (data.getHeaders() != null && data.getHeaders().size() > 0) {
-            for (Map.Entry<String, String> v : data.getHeaders().entrySet()) {
-                c.add(v.getKey(), v.getValue());
-            }
-        }
-    }
-
 
     public static class Data
     {
-
         /**
          * 请求类型  GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, TRACE;
          */
@@ -77,12 +97,12 @@ public class HttpWebClient
         /**
          * URL 传递的参数
          */
-        MultiValueMap<String, String> queryParam;
+        Map<String, String> queryParam;
 
         /**
          * body 传递的参数
          */
-        Map<String, Object> bodyMap;
+        Map<String, String> bodyMap;
 
         /**
          * 请求头
@@ -152,31 +172,73 @@ public class HttpWebClient
             return this;
         }
 
-        public MultiValueMap<String, String> getQueryParam() {
-            return queryParam;
+        public MultiValueMap<String, String> getQueryParam(Map<String, Object> dataMap) {
+            if (queryParam == null) return null;
+            MultiValueMap<String, String> multiValueMap = new LinkedMultiValueMap<>();
+            getMapValueString(queryParam, dataMap).forEach(multiValueMap::add);
+            return multiValueMap;
         }
 
-        public Data setQueryParam(MultiValueMap<String, String> queryParam) {
+
+        public Data setQueryParam(Map<String, String> queryParam) {
             this.queryParam = queryParam;
             return this;
         }
 
-        public Map<String, Object> getBodyMap() {
+        public Map<String, String> getBodyMap() {
             return bodyMap;
         }
 
-        public Data setBodyMap(Map<String, Object> map) {
+        public Data setBodyMap(Map<String, String> map) {
             this.bodyMap = map;
             return this;
         }
 
-        public Map<String, String> getHeaders() {
-            return headers;
+        public HttpHeaders getHeaders(Map<String, Object> map, HttpHeaders c) {
+            if (headers != null && headers.size() > 0) {
+                getMapValueString(headers, map).forEach(c::add);
+            }
+            return c;
         }
 
         public Data setHeaders(Map<String, String> headers) {
             this.headers = headers;
             return this;
+        }
+
+
+        public static Map<String, String> getMapValueString(Map<String, String> param, Map<String, Object> dataMap) {
+            for (Map.Entry<String, String> entry : param.entrySet()) {
+                //  是否有值
+                String value = entry.getValue();
+                if (StringUtils.hasText(value)) {
+                    // 提取数据  如  map = {user,atliwen}  ${user} = atliwen
+                    if (value.startsWith("${") && value.endsWith("}")) {
+                        value = value.substring(2, value.length() - 1);
+                        param.put(entry.getKey(), String.valueOf(dataMap.get(value)));
+                    }
+                }
+            }
+            return param;
+        }
+
+        public static Map<String, Object> getMapValueObject(Map<String, String> param, Map<String, Object> dataMap) {
+            Map<String, Object> newObjects = new HashMap<>();
+            for (Map.Entry<String, String> entry : param.entrySet()) {
+                //  是否有值
+                String value = entry.getValue();
+                if (StringUtils.hasText(value)) {
+                    // 提取数据  如  map = {user,atliwen}  ${user} = atliwen
+                    if (value.startsWith("${") && value.endsWith("}")) {
+                        value = value.substring(2, value.length() - 1);
+                        newObjects.put(entry.getKey(), dataMap.get(value));
+                    } else {
+                        newObjects.put(entry.getKey(), entry.getValue());
+                    }
+                }
+            }
+
+            return newObjects;
         }
     }
 
