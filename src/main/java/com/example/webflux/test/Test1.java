@@ -1,11 +1,16 @@
 package com.example.webflux.test;
 
-import com.alibaba.fastjson2.JSON;
-import com.example.webflux.stream.FlatMap;
-import com.example.webflux.stream.HttpWebClient;
+import com.alibaba.fastjson.JSON;
+import com.example.webflux.stream.convert.ConvertData;
+import com.example.webflux.stream.convert.FlatMap;
+import com.example.webflux.stream.mysql.MysqlData;
+import com.example.webflux.stream.webclient.HttpWebClient;
+import com.example.webflux.stream.webclient.WebClientData;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,39 +20,48 @@ import java.util.Map;
 public class Test1
 {
 
+
+    static String a = " for (Map.Entry<String, Object> entry : data.entrySet()) {\n" +
+            "            println entry.getKey()\n" +
+            "            println entry.getValue()\n" +
+            "    }\n" +
+            " // println ${user}  \n" +
+            "return  data ";
+
     public static void main(String[] args) {
-        HttpWebClient.Data data = getData();
+
+        MysqlData dat1a = new MysqlData();
+
+
+        WebClientData data = getData();
 
         Map<String, Object> map = new HashMap<>();
         map.put("user", "atliwen");
 
-        Mono<Map> m = Mono.just(map);
-
-        m = m.flatMap(c -> HttpWebClient.performed(data, c));
-
-        //m = m.doOnError(c -> System.out.println("a-----------------a  " + c.getMessage()));
-
-        FlatMap.Data flat = new FlatMap.Data();
-
-        String a = " for (Map.Entry<String, Object> entry : data.entrySet()) {\n" +
-                "            println entry.getKey()\n" +
-                "            println entry.getValue()\n" +
-                "        }\n" +
-                "        return data";
-        flat.setGroovyTest(a);
-
-        System.out.println(FlatMap.performed(flat, map).block());
+        List<Map<String, Object>> list = new ArrayList<>();
+        list.add(map);
 
 
-        m = m.flatMap(c -> FlatMap.performed(flat, c));
+        Mono<List<Map<String, Object>>> m = Mono.just(list);
+        HttpWebClient httpWebClient = new HttpWebClient();
+        m = m.flatMap(c -> httpWebClient.performed(data, c));
+
+
+        ConvertData flat = new ConvertData();
+
+        flat.setGroovyTest("      Map map1 = new HashMap();\n" +
+                "        map1.put(\"out\",code);\n" +
+                "        return map1; ");
+
+        m = m.flatMap(c -> new FlatMap().performed(flat, c));
         Object o = m.block();
         System.out.println(JSON.toJSONString(o));
 
     }
 
 
-    static HttpWebClient.Data getData() {
-        HttpWebClient.Data data = new HttpWebClient.Data();
+    static WebClientData getData() {
+        WebClientData data = new WebClientData();
         data.setUrlPath("http://10.10.12.114:8099/test3/tt");
 
         data.setContentType("application/json");
