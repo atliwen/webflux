@@ -61,7 +61,7 @@ public class RouterFunctionConfiguration
         serveData.setQueryParam(queryParams);
         serveData.setBodyMap(queryParams);
         data.setData(serveData);
-
+        // 动态代码
         ConvertData flat = new ConvertData();
         flat.setGroovyTest("      Map map1 = new HashMap();\n" +
                 "     \n" +
@@ -69,9 +69,7 @@ public class RouterFunctionConfiguration
                 "        return map1; ");
         ProcessData groovyData = new ProcessData("flatMapService", flat, null);
         data.setNext(groovyData);
-
-
-        //  构建第三步   查询数据库
+        //  构建第三步   插入数据库
         MysqlData d1 = new MysqlData();
         d1.setDatasourceName("master");
         // 0 ：Select ， 1 update , 2 delete  3 insert
