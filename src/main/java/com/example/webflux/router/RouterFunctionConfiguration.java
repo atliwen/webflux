@@ -62,10 +62,10 @@ public class RouterFunctionConfiguration
         serveData.setBodyMap(queryParams);
         data.setData(serveData);
 
-
         ConvertData flat = new ConvertData();
         flat.setGroovyTest("      Map map1 = new HashMap();\n" +
-                "        map1.put(\"out\",\"ocode\");\n" +
+                "     \n" +
+                "        map1.put(\"out\",name);\n" +
                 "        return map1; ");
         ProcessData groovyData = new ProcessData("flatMapService", flat, null);
         data.setNext(groovyData);
@@ -75,10 +75,11 @@ public class RouterFunctionConfiguration
         MysqlData d1 = new MysqlData();
         d1.setDatasourceName("master");
         // 0 ：Select ， 1 update , 2 delete  3 insert
-        d1.setExecuteType(0);
+        d1.setExecuteType(1);
         // 0 Mybatis XML  1 拼接SQL
         d1.setSqlType(0);
-        d1.setSql(" SELECT * FROM `test1` ");
+
+        d1.setSql(" INSERT INTO test3 (uid) VALUES (#{data[0].out}) ");
         ProcessData mysqlData = new ProcessData("mysqlService", d1, null);
         groovyData.setNext(mysqlData);
         return data;
