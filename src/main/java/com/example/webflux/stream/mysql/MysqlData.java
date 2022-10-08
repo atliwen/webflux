@@ -16,13 +16,13 @@ public class MysqlData
 
     /**
      * 类型  脚本语言自己拼接SQL  与  mybatis XML
-     * 0 XML 1 拼接SQL
+     * 0 Mybatis XML  1 拼接SQL
      */
     private Integer sqlType;
 
     /**
      * 执行SQL的类型
-     * 0 ：Select ， 1 update , 2 delete
+     * 0 ：Select ， 1 update , 2 delete  3 insert
      */
     private Integer executeType;
 

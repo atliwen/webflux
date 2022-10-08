@@ -1,6 +1,8 @@
 package com.example.webflux.stream.mysql;
 
+import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.example.webflux.stream.Sos;
+import com.example.webflux.stream.mysql.mybatis.Mapper;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyCodeSource;
 import groovy.lang.GroovyShell;
@@ -30,7 +32,10 @@ public class Mysql implements Sos
      * @return 相应的数据
      */
     public Mono<List<Map<String, Object>>> performed(Object data, List<Map<String, Object>> dataMap) {
+
         MysqlData newData = (MysqlData) data;
+        DynamicDataSourceContextHolder.push(newData.getDatasourceName());//数据源名称
+
         String sql = newData.getSql();
         if (newData.getSqlType() == 1) {
             sql = executeGroovy(newData, dataMap);
@@ -38,6 +43,7 @@ public class Mysql implements Sos
         if (newData.getExecuteType() == 0) {
             return Mono.just(mapper.select(sql, dataMap));
         }
+
         List<Map<String, Object>> outputs = new ArrayList<>();
         Map<String, Object> map = new HashMap<>();
         if (newData.getExecuteType() == 1) {
@@ -48,6 +54,12 @@ public class Mysql implements Sos
             map.put("rows", mapper.delete(sql, dataMap));
             outputs.add(map);
         }
+        if (newData.getExecuteType() == 3) {
+            map.put("rows", mapper.insert(sql, dataMap));
+            outputs.add(map);
+        }
+
+        DynamicDataSourceContextHolder.push("master");//数据源名称
         return Mono.just(outputs);
     }
 

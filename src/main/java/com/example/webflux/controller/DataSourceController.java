@@ -81,6 +81,7 @@ public class DataSourceController {
     public String remove(String name) {
         DynamicRoutingDataSource ds = (DynamicRoutingDataSource) dataSource;
         ds.removeDataSource(name);
+
         return "删除成功";
 
 
