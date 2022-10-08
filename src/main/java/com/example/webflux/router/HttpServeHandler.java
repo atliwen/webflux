@@ -1,7 +1,9 @@
 package com.example.webflux.router;
 
 import com.alibaba.fastjson.JSON;
+import com.example.webflux.dome.ProcessData;
 import com.example.webflux.router.dome.HttpServeData;
+import com.example.webflux.stream.Sos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -24,11 +26,16 @@ public class HttpServeHandler implements HandlerFunction<ServerResponse>
 
     HttpServeData serveData;
 
+    ProcessData processData;
+    Map<String, Sos> sosServiceMap;
+
     public HttpServeHandler() {
     }
 
-    public HttpServeHandler(HttpServeData data) {
-        this.serveData = data;
+    public HttpServeHandler(ProcessData data, Map<String, Sos> sosServiceMap) {
+        this.serveData = (HttpServeData) data.getData();
+        this.processData = data;
+        this.sosServiceMap = sosServiceMap;
     }
 
 
@@ -56,11 +63,26 @@ public class HttpServeHandler implements HandlerFunction<ServerResponse>
                     System.out.println(JSON.toJSONString(list));
                 }).flatMap(c -> {
                     System.out.println(JSON.toJSONString(list));
-                    return ServerResponse.ok().body(Mono.just(list), List.class);
-                }).switchIfEmpty(ServerResponse.ok().body(Mono.just(isEmpty(list,map)), List.class));
+                    return ServerResponse.ok().body(ifNextData(processData, list), List.class);
+                }).switchIfEmpty(ServerResponse.ok().body(ifNextData(processData, isEmpty(list, map)), List.class));
     }
 
-    private List<Map<String, Object>> isEmpty(List<Map<String, Object>> list,Map<String, Object> map) {
+    private Mono<List<Map<String, Object>>> ifNextData(ProcessData next, List<Map<String, Object>> list) {
+        if (next.getNext() == null) {
+            return Mono.just(list);
+        }
+        ProcessData data = processData.getNext();
+        Mono<List<Map<String, Object>>> mono = sosServiceMap.get(data.getName()).performed(data.getData(), list);
+        while (data.getNext() != null) {
+            data = data.getNext();
+            ProcessData finalData = data;
+            mono = mono.flatMap(c -> sosServiceMap.get(finalData.getName()).performed(finalData.getData(), c));
+        }
+        return mono;
+    }
+
+
+    private List<Map<String, Object>> isEmpty(List<Map<String, Object>> list, Map<String, Object> map) {
         list.add(map);
         return list;
     }

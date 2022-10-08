@@ -2,12 +2,12 @@ package com.example.webflux;
 
 import com.alibaba.fastjson.JSON;
 import com.example.webflux.stream.convert.ConvertData;
-import com.example.webflux.stream.convert.FlatMap;
-import com.example.webflux.stream.mysql.Mysql;
+import com.example.webflux.stream.convert.FlatMapService;
+import com.example.webflux.stream.mysql.MysqlService;
 import com.example.webflux.stream.mysql.MysqlData;
 import com.example.webflux.stream.mysql.mybatis.Mapper;
 import com.example.webflux.stream.mysql.mybatis.ServiceImpl;
-import com.example.webflux.stream.webclient.HttpWebClient;
+import com.example.webflux.stream.webclient.HttpWebClientService;
 import com.example.webflux.stream.webclient.WebClientData;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +47,7 @@ class WebfluxApplicationTests
     }
 
     @Autowired
-    Mysql mysql;
+    MysqlService mysqlService;
 
     @Test
     void test1() {
@@ -66,8 +66,8 @@ class WebfluxApplicationTests
         //构建 第一步  发送请求
 
         WebClientData data = getData();
-        HttpWebClient httpWebClient = new HttpWebClient();
-        m = m.flatMap(c -> httpWebClient.performed(data, c));
+        HttpWebClientService httpWebClientService = new HttpWebClientService();
+        m = m.flatMap(c -> httpWebClientService.performed(data, c));
 
 
         // 构建第二步 转换数据
@@ -77,7 +77,7 @@ class WebfluxApplicationTests
                 "        map1.put(\"out\",code) \n" +
                 "        return map1  ");
 
-        m = m.flatMap(c -> new FlatMap().performed(flat, c));
+        m = m.flatMap(c -> new FlatMapService().performed(flat, c));
 
         //m = m.doOnNext(c -> {
         //    for (Map<String, Object> ma : c) {
@@ -96,7 +96,7 @@ class WebfluxApplicationTests
         d1.setSqlType(0);
         d1.setSql(" INSERT INTO test3 (uid) VALUES (#{data[0].out}) ");
 
-        m = m.flatMap(c -> mysql.performed(d1, c));
+        m = m.flatMap(c -> mysqlService.performed(d1, c));
 
         Object o = m.block();
         System.out.println(JSON.toJSONString(o));

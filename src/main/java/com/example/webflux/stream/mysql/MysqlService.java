@@ -16,11 +16,11 @@ import java.util.*;
  * @create 2022-06-22 14:19
  **/
 @Component
-public class Mysql implements Sos
+public class MysqlService implements Sos
 {
     final Mapper mapper;
 
-    public Mysql(Mapper mapper) {
+    public MysqlService(Mapper mapper) {
         this.mapper = mapper;
     }
 

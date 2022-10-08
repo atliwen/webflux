@@ -17,7 +17,7 @@ import java.util.Map;
  * @create 2022-06-15 11:16
  **/
 @Component
-public class HttpWebClient implements Sos
+public class HttpWebClientService implements Sos
 {
 
     WebClient client = WebClient.create();

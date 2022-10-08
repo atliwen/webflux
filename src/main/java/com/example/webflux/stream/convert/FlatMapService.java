@@ -17,7 +17,7 @@ import java.util.*;
  * @create 2022-06-16 15:22
  **/
 @Component
-public class FlatMap implements Sos
+public class FlatMapService implements Sos
 {
     public Mono<List<Map<String, Object>>> performed(Object data, List<Map<String, Object>> dataMap) {
         List<Map<String, Object>> list = new ArrayList<>();

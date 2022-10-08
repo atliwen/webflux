@@ -2,9 +2,9 @@ package com.example.webflux.test;
 
 import com.alibaba.fastjson.JSON;
 import com.example.webflux.stream.convert.ConvertData;
-import com.example.webflux.stream.convert.FlatMap;
+import com.example.webflux.stream.convert.FlatMapService;
 import com.example.webflux.stream.mysql.MysqlData;
-import com.example.webflux.stream.webclient.HttpWebClient;
+import com.example.webflux.stream.webclient.HttpWebClientService;
 import com.example.webflux.stream.webclient.WebClientData;
 import reactor.core.publisher.Mono;
 
@@ -43,8 +43,8 @@ public class Test1
 
 
         Mono<List<Map<String, Object>>> m = Mono.just(list);
-        HttpWebClient httpWebClient = new HttpWebClient();
-        m = m.flatMap(c -> httpWebClient.performed(data, c));
+        HttpWebClientService httpWebClientService = new HttpWebClientService();
+        m = m.flatMap(c -> httpWebClientService.performed(data, c));
 
 
         ConvertData flat = new ConvertData();
@@ -53,7 +53,7 @@ public class Test1
                 "        map1.put(\"out\",code);\n" +
                 "        return map1; ");
 
-        m = m.flatMap(c -> new FlatMap().performed(flat, c));
+        m = m.flatMap(c -> new FlatMapService().performed(flat, c));
         Object o = m.block();
         System.out.println(JSON.toJSONString(o));
 
