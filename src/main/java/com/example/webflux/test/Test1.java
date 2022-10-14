@@ -6,8 +6,11 @@ import com.example.webflux.stream.convert.FlatMapService;
 import com.example.webflux.stream.mysql.MysqlData;
 import com.example.webflux.stream.webclient.HttpWebClientService;
 import com.example.webflux.stream.webclient.WebClientData;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +23,19 @@ import java.util.Map;
 public class Test1
 {
 
+    public static void main(String[] args) {
+
+        Flux.interval(Duration.ofMillis(3000), Schedulers.newSingle("test"))
+                .doOnNext(System.out::println).doOnNext(c->{
+                    try {
+                        Thread.sleep(9000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println(c);
+                }).subscribe();
+
+    }
 
     static String a = " for (Map.Entry<String, Object> entry : data.entrySet()) {\n" +
             "            println entry.getKey()\n" +
@@ -28,7 +44,7 @@ public class Test1
             " // println ${user}  \n" +
             "return  data ";
 
-    public static void main(String[] args) {
+    public static void main1(String[] args) {
 
         MysqlData dat1a = new MysqlData();
 
